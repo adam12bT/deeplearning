@@ -174,11 +174,16 @@ def main():
                     'epochs_without_improvement':patience,'batch_size':args.batch_size,
                     'torch_rng_state':torch.get_rng_state(),'loader_rng_state':generator.get_state(),
                     'cuda_rng_state':torch.cuda.get_rng_state_all() if device.type=='cuda' else [],
+                    'seed':(resume or {}).get('seed') if resume else args.seed,
                     'fine_tuned_from':args.init_from or (resume or {}).get('fine_tuned_from')}
     tracking_params={'parameters':parameters,'dataset_manifest_sha256':identity['manifest_sha256'],
                      'tokenizer_sha256':identity['checkpoint_sha256'],
+                     'batch_size':args.batch_size,'optimizer_initial_lr':scheduler.base_lrs[0],
+                     'seed':(resume or {}).get('seed') if resume else args.seed,
+                     'dropout':cfg.dropout,
                      **{k:getattr(cfg,k) for k in ('n_layer','n_head','n_embd','block_size','vocab_size')}}
-    with training_tracking(args.mlflow,run,tracking_params,{'recording_mode':'live_training'}) as tracking:
+    with training_tracking(args.mlflow,run,tracking_params,{'recording_mode':'live_training',
+                           'latest_requested_epochs':args.epochs,'device':str(device)}) as tracking:
         for previous in history:tracking.epoch(previous)
         if initial:
             status('evaluating_baseline',parameters=parameters)
