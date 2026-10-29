@@ -88,6 +88,15 @@ class ApiTests(unittest.TestCase):
 
 
 class GroqTests(unittest.IsolatedAsyncioTestCase):
+    async def test_model_access_errors_are_not_reported_as_bad_json(self):
+        settings=Settings('test-key','missing-model',None,'owner/space',(),Path('unused'))
+        for status,code in ((404,'llm_model_unavailable'),(401,'llm_auth'),(403,'llm_auth'),(429,'llm_rate_limit')):
+            response=httpx.Response(status,json={'error':{'message':'provider detail'}},request=httpx.Request('POST','https://api.groq.com'))
+            mock=AsyncMock();mock.__aenter__.return_value=mock;mock.post.return_value=response
+            with patch('backend.services.httpx.AsyncClient',return_value=mock):
+                with self.assertRaises(ServiceError) as caught:await interpret('a landscape',settings)
+            self.assertEqual(caught.exception.code,code)
+
     async def test_invalid_llm_json_cannot_become_scene_controls(self):
         settings=Settings('test-secret','model',None,'owner/space',(),Path('unused'))
         response=httpx.Response(200,json={'choices':[{'finish_reason':'stop','message':{'content':json.dumps(dict(PLAN,scene=dict(SCENE,sky='space')))}}]},request=httpx.Request('POST','https://api.groq.com'))

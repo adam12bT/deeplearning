@@ -45,7 +45,7 @@ scene controls. No executable code from the LLM is run.
 ## Deploy frontend and configure hosted backend
 
 1. In Hugging Face Space Settings → Variables and secrets, add **secret**
-   `GROQ_API_KEY`. `GROQ_MODEL` defaults to `llama-3.3-70b-versatile` and is configurable.
+   `GROQ_API_KEY`. `GROQ_MODEL` defaults to `qwen/qwen3.8-27b` and is configurable.
 2. Import the GitHub repo into Vercel. Select **frontend** as the root directory,
    Vite as framework, `npm run build` as build command, and `dist` as output.
 3. Set Vercel environment variable `VITE_API_BASE_URL` to

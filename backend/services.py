@@ -36,21 +36,31 @@ async def interpret(prompt,settings):
     if not settings.groq_api_key:
         raise ServiceError('llm_not_configured','Set GROQ_API_KEY on the backend to enable text prompts.')
     try:
-        async with httpx.AsyncClient(timeout=30.) as client:
+        async with httpx.AsyncClient(timeout=45.) as client:
             response=await client.post('https://api.groq.com/openai/v1/chat/completions',
                 headers={'Authorization':f'Bearer {settings.groq_api_key}'},
-                json={'model':settings.groq_model,'temperature':0,'max_completion_tokens':600,
+                json={'model':settings.groq_model,'temperature':0,'max_completion_tokens':1200,
                       'response_format':{'type':'json_object'},
                       'messages':[{'role':'system','content':SYSTEM},{'role':'user','content':prompt}]})
         if response.status_code==429:
             raise ServiceError('llm_rate_limit','The text service is busy. Please try again later.',429)
+        if response.status_code in (401,403):
+            raise ServiceError('llm_auth','Groq rejected the API credentials. Check the backend GROQ_API_KEY secret.')
+        if response.status_code==404:
+            raise ServiceError('llm_model_unavailable','The configured Groq model is unavailable. Update GROQ_MODEL to a model your account can access.')
         response.raise_for_status()
         payload=response.json()
         if payload['choices'][0].get('finish_reason')!='stop':
             raise ValueError('Incomplete LLM response')
         return ScenePlan.model_validate_json(payload['choices'][0]['message']['content'])
     except ServiceError:raise
-    except (httpx.HTTPError,ValidationError,ValueError,KeyError,IndexError,TypeError):
+    except httpx.TimeoutException:
+        raise ServiceError('llm_timeout','The text service timed out. Please retry.',504) from None
+    except httpx.HTTPStatusError:
+        raise ServiceError('llm_provider_error','Groq rejected the text request. Please check the model configuration or try again later.') from None
+    except httpx.RequestError:
+        raise ServiceError('llm_connection','Could not connect to the text service. Please retry.') from None
+    except (ValidationError,ValueError,KeyError,IndexError,TypeError):
         raise ServiceError('llm_failed','The text service could not produce valid scene controls. Please retry.') from None
 
 

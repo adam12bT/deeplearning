@@ -17,7 +17,7 @@ class Settings:
     @classmethod
     def from_env(cls):
         return cls(groq_api_key=os.getenv('GROQ_API_KEY',''),
-                   groq_model=os.getenv('GROQ_MODEL','llama-3.3-70b-versatile'),
+                   groq_model=os.getenv('GROQ_MODEL','qwen/qwen3.8-27b'),
                    hf_token=os.getenv('HF_TOKEN') or None,
                    hf_space=os.getenv('HF_SPACE','adamnouassida5/deeplearning'),
                    cors_origins=tuple(x.strip() for x in os.getenv('CORS_ORIGINS','http://localhost:5173').split(',') if x.strip()),
