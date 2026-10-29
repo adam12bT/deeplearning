@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "schema_version": 2,
+  "images": 13824,
+  "unique_pixel_hashes": 13824,
+  "combinations": 432,
+  "splits": {
+    "train": 9792,
+    "val": 1632,
+    "test": 2400
+  },
+  "heldout_images": {
+    "test": 768
+  },
+  "objects": {
+    "none": 4608,
+    "trees": 4608,
+    "settlement": 4608
+  },
+  "manifest_sha256": "6e9a7e99e41e18beb3bf6601c31a0bbaa1de83c8a666b829356539be899713b5"
+}

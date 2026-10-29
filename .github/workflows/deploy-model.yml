@@ -1,0 +1,36 @@
+name: Deploy approved model
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Approved registry version
+        required: true
+        default: landscape-large-v1
+permissions:
+  contents: read
+concurrency:
+  group: production-model
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install 'huggingface-hub>=0.33,<2'
+      - run: python -m mlops.check_registry
+      - name: Deploy immutable release
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          HF_SPACE: adamnouassida5/deeplearning
+        run: python mlops/deploy.py --version "$RELEASE_VERSION" --space "$HF_SPACE"
+      - name: Verify running release without spending GPU quota
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: python mlops/healthcheck.py --version "$RELEASE_VERSION"

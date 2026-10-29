@@ -1,0 +1,46 @@
+schema: '2.0'
+stages:
+  audit_original:
+    cmd: python mlops/data_audit.py --root dataset --out 
+      reports/datasets/original.json
+    deps:
+    - path: dataset
+      hash: md5
+      md5: 2e3182c1183136bf6b5b2b835e58da60.dir
+      size: 30275164
+      nfiles: 13877
+    - path: datasets/validate_compositional.py
+      hash: md5
+      md5: 2c04c243e5274aad90d0be40531d6a9f
+      size: 3529
+    - path: mlops/data_audit.py
+      hash: md5
+      md5: 7c10b22de3c6e0440abaa32040701b0a
+      size: 522
+    outs:
+    - path: reports/datasets/original.json
+      hash: md5
+      md5: e0d8aa1815764a9a036854d496c73ab3
+      size: 423
+  audit_clean_candidate:
+    cmd: python mlops/data_audit.py --root dataset_clean_candidate --out 
+      reports/datasets/clean_candidate.json
+    deps:
+    - path: dataset_clean_candidate
+      hash: md5
+      md5: 3e7a9127f977b57351f2b51cbc07a861.dir
+      size: 30758157
+      nfiles: 13877
+    - path: datasets/validate_compositional.py
+      hash: md5
+      md5: 2c04c243e5274aad90d0be40531d6a9f
+      size: 3529
+    - path: mlops/data_audit.py
+      hash: md5
+      md5: 7c10b22de3c6e0440abaa32040701b0a
+      size: 522
+    outs:
+    - path: reports/datasets/clean_candidate.json
+      hash: md5
+      md5: 722743fdf96a814acbcd84b01a49024e
+      size: 423

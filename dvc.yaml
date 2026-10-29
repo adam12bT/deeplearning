@@ -1,0 +1,19 @@
+stages:
+  audit_original:
+    cmd: python mlops/data_audit.py --root dataset --out reports/datasets/original.json
+    deps:
+      - dataset
+      - datasets/validate_compositional.py
+      - mlops/data_audit.py
+    metrics:
+      - reports/datasets/original.json:
+          cache: false
+  audit_clean_candidate:
+    cmd: python mlops/data_audit.py --root dataset_clean_candidate --out reports/datasets/clean_candidate.json
+    deps:
+      - dataset_clean_candidate
+      - datasets/validate_compositional.py
+      - mlops/data_audit.py
+    metrics:
+      - reports/datasets/clean_candidate.json:
+          cache: false

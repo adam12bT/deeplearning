@@ -1,0 +1,103 @@
+{
+  "active_version": "landscape-large-v1",
+  "releases": {
+    "landscape-large-v1": {
+      "version": "landscape-large-v1",
+      "created_utc": "2026-10-29T22:02:58.149879+00:00",
+      "epoch": 20,
+      "parameters": 12621696,
+      "checkpoint_sha256": "2abfc134738e412902c3b129d5bdd815f9709d986527874cc6bf16991ab750a8",
+      "tokenizer_sha256": "d476e90d12d81b6783785aee562ca0c3afc93ed502202b0cd369a3904db1a19d",
+      "dataset_manifest_sha256": "6e9a7e99e41e18beb3bf6601c31a0bbaa1de83c8a666b829356539be899713b5",
+      "config": {
+        "vocab_size": 2048,
+        "block_size": 1024,
+        "condition_sizes": [
+          4,
+          3,
+          3,
+          4,
+          3
+        ],
+        "n_layer": 6,
+        "n_head": 6,
+        "n_embd": 384,
+        "dropout": 0.1
+      },
+      "best_val_loss": 0.5981364846229553,
+      "files": {
+        "model.pt": "cd67ceb145966e8810c56477c84d2521923831be96143a00f47cd75997fe0e34",
+        "tokenizer.pt": "d476e90d12d81b6783785aee562ca0c3afc93ed502202b0cd369a3904db1a19d"
+      },
+      "local_checkpoint": "checkpoints/model_pixel_patches_larger/best.pt",
+      "status": "approved",
+      "remote": {
+        "repo_id": "adamnouassida5/pixel-landscape-transformer",
+        "revision": "b9e9b5ed94b525731cf47ad89cb10c13716f8982",
+        "path": "landscape-large-v1"
+      }
+    },
+    "landscape-small-v1": {
+      "version": "landscape-small-v1",
+      "created_utc": "2026-10-29T22:04:11.820849+00:00",
+      "epoch": 38,
+      "parameters": 4475648,
+      "checkpoint_sha256": "8063375a4f1157dc9ff0add06fffe1fbdc6d20218069593d32525933b8437969",
+      "tokenizer_sha256": "d476e90d12d81b6783785aee562ca0c3afc93ed502202b0cd369a3904db1a19d",
+      "dataset_manifest_sha256": "6e9a7e99e41e18beb3bf6601c31a0bbaa1de83c8a666b829356539be899713b5",
+      "config": {
+        "vocab_size": 2048,
+        "block_size": 1024,
+        "condition_sizes": [
+          4,
+          3,
+          3,
+          4,
+          3
+        ],
+        "n_layer": 4,
+        "n_head": 4,
+        "n_embd": 256,
+        "dropout": 0.1
+      },
+      "best_val_loss": 0.5975265502929688,
+      "files": {
+        "model.pt": "8d84e8953dd8c1c4ae7b302bf776ea1163dfb90281526d508a9af2ca8bae9986",
+        "tokenizer.pt": "d476e90d12d81b6783785aee562ca0c3afc93ed502202b0cd369a3904db1a19d"
+      },
+      "local_checkpoint": "checkpoints/model_pixel_patches/best.pt",
+      "status": "approved"
+    },
+    "landscape-clean-candidate-v1": {
+      "version": "landscape-clean-candidate-v1",
+      "created_utc": "2026-10-29T22:05:33.580173+00:00",
+      "epoch": 8,
+      "parameters": 4475648,
+      "checkpoint_sha256": "9dee0d605454d59b875a7ed0213f942dcdbc71d2f845093a250c45ea0f248ff2",
+      "tokenizer_sha256": "d476e90d12d81b6783785aee562ca0c3afc93ed502202b0cd369a3904db1a19d",
+      "dataset_manifest_sha256": "175bda8cf679dd1d1337d1ee1a27bdf8642ee5faa6348e8b480debf9474940b6",
+      "config": {
+        "vocab_size": 2048,
+        "block_size": 1024,
+        "condition_sizes": [
+          4,
+          3,
+          3,
+          4,
+          3
+        ],
+        "n_layer": 4,
+        "n_head": 4,
+        "n_embd": 256,
+        "dropout": 0.1
+      },
+      "best_val_loss": 0.5908743143081665,
+      "files": {
+        "model.pt": "57fe4cca9c6fe1ee8fea3ef123c9ba72b5afc72ce2bb34f089501d9a9f2b3511",
+        "tokenizer.pt": "d476e90d12d81b6783785aee562ca0c3afc93ed502202b0cd369a3904db1a19d"
+      },
+      "local_checkpoint": "checkpoints/model_clean_candidate/best.pt",
+      "status": "candidate"
+    }
+  }
+}

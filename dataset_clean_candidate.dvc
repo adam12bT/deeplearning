@@ -1,0 +1,6 @@
+outs:
+- md5: 3e7a9127f977b57351f2b51cbc07a861.dir
+  size: 30758157
+  nfiles: 13877
+  hash: md5
+  path: dataset_clean_candidate

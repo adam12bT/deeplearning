@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "manifest": "dataset/manifest.json",
+  "schema": "dataset/schema.json",
+  "condition_fields": [
+    "sky",
+    "landform",
+    "ground",
+    "water",
+    "objects"
+  ],
+  "images": 13824,
+  "old_image_directories_removed": true,
+  "new_model_trained": true,
+  "tokenizer_checkpoint": "checkpoints/vqvae_v2/vqvae_best.pt",
+  "tokenizer_adapted": true,
+  "tokens_dir": "checkpoints\\tokens_v2",
+  "tokens_validated": true,
+  "model_checkpoint": "checkpoints\\model_compositional_v2\\best.pt",
+  "model_type": "compositional_v2",
+  "training_status_file": "runs/compositional_training/status.json"
+}
