@@ -4,6 +4,12 @@ The dashboard is local: http://localhost:5000. It is not the Vercel frontend or
 the Hugging Face image backend. No model is automatically promoted by MLflow.
 The JSON model registry remains the deployment authority.
 
+For this workspace, open the imported experiment directly at
+http://localhost:5000/#/experiments/1/runs. If you open the root dashboard instead,
+select **Model training**, then **Pixel Landscape Training → Runs**. MLflow's
+default GenAI overview will show no traces because these are image-model
+training runs. Dismiss the first-use tip with **Got it** if it covers navigation.
+
 Start or reopen the dashboard from the project root:
 
 ```powershell
