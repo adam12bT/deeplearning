@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   audit_original:
-    cmd: python mlops/data_audit.py --root dataset --out 
+    cmd: python mlops/data_audit.py --root dataset --out
       reports/datasets/original.json
     deps:
     - path: dataset
@@ -23,7 +23,7 @@ stages:
       md5: e0d8aa1815764a9a036854d496c73ab3
       size: 423
   audit_clean_candidate:
-    cmd: python mlops/data_audit.py --root dataset_clean_candidate --out 
+    cmd: python mlops/data_audit.py --root dataset_clean_candidate --out
       reports/datasets/clean_candidate.json
     deps:
     - path: dataset_clean_candidate
