@@ -2,6 +2,7 @@
 import base64
 import io
 import json
+import logging
 import secrets
 import time
 from pathlib import Path
@@ -11,6 +12,8 @@ from PIL import Image
 from pydantic import ValidationError
 
 from backend.schemas import ScenePlan, GenerationRequest, GenerationResult
+
+logger=logging.getLogger('pixel_api')
 
 
 class ServiceError(Exception):
@@ -51,6 +54,7 @@ async def interpret(prompt,settings):
         response.raise_for_status()
         payload=response.json()
         if payload['choices'][0].get('finish_reason')!='stop':
+            logger.warning('Groq output incomplete model=%s finish=%s',settings.groq_model,payload['choices'][0].get('finish_reason'))
             raise ValueError('Incomplete LLM response')
         return ScenePlan.model_validate_json(payload['choices'][0]['message']['content'])
     except ServiceError:raise
@@ -60,7 +64,9 @@ async def interpret(prompt,settings):
         raise ServiceError('llm_provider_error','Groq rejected the text request. Please check the model configuration or try again later.') from None
     except httpx.RequestError:
         raise ServiceError('llm_connection','Could not connect to the text service. Please retry.') from None
-    except (ValidationError,ValueError,KeyError,IndexError,TypeError):
+    except (ValidationError,ValueError,KeyError,IndexError,TypeError) as error:
+        locations=[{'field':e['loc'],'type':e['type']} for e in error.errors()] if isinstance(error,ValidationError) else []
+        logger.warning('Groq response invalid model=%s error=%s fields=%s',settings.groq_model,type(error).__name__,locations)
         raise ServiceError('llm_failed','The text service could not produce valid scene controls. Please retry.') from None
 
 
