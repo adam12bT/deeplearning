@@ -5,6 +5,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+
 
 def main():
     parser=argparse.ArgumentParser()
@@ -21,6 +23,7 @@ def main():
     parser.add_argument('--lr',type=float,default=3e-4)
     parser.add_argument('--patience',type=int,default=6)
     parser.add_argument('--warmup-steps',type=int,default=200)
+    parser.add_argument('--mlflow',action='store_true')
     args=parser.parse_args()
     root=Path(__file__).resolve().parents[1]
     run=root/args.run_dir; run.mkdir(parents=True,exist_ok=True)
@@ -31,6 +34,7 @@ def main():
              '--n-head',str(args.n_head),'--n-embd',str(args.n_embd),
              '--lr',str(args.lr),'--patience',str(args.patience),'--warmup-steps',str(args.warmup_steps)]
     if args.init_from: command+=['--init-from',args.init_from]
+    if args.mlflow: command+=['--mlflow']
     if args.resume: command+=['--resume',str(model_dir/'last.pt')]
     def failure(stage,code):
         (run/'status.json').write_text(json.dumps({'status':'failed','stage':stage,'exit_code':code},indent=2))
@@ -55,6 +59,15 @@ def main():
             if result.returncode: failure('sample_generation',result.returncode)
     state['sampling_status']='completed'
     (run/'status.json').write_text(json.dumps(state,indent=2))
+    if args.mlflow:
+        from mlops.tracking import RunTracker
+        tracking=RunTracker(run,{},tags={'preview_status':'completed'})
+        try:
+            for path in (run/'samples').rglob('*.png'):
+                tracking.artifact(path,'samples/'+path.parent.name)
+        except BaseException:
+            tracking.finish('FAILED');raise
+        else:tracking.finish()
     print('Training and familiar-condition previews completed.',flush=True)
 
 

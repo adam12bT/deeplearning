@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader,TensorDataset
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from transformer.compositional import CompositionalConfig,CompositionalTransformer
 from training.schedules import make_lr_lambda
+from mlops.tracking import training_tracking
 
 
 def digest(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -103,6 +104,7 @@ def main():
     parser.add_argument('--seed',type=int,default=26431)
     parser.add_argument('--resume')
     parser.add_argument('--init-from',help='Warm-start compatible weights on a new dataset with a fresh optimizer')
+    parser.add_argument('--mlflow',action='store_true',help='Track this run in the local MLflow dashboard or MLFLOW_TRACKING_URI')
     args=parser.parse_args()
     if min(args.epochs,args.batch_size)<1: parser.error('Epochs and batch size must be positive')
     if args.resume and args.init_from: parser.error('Choose resume or init-from, not both')
@@ -173,44 +175,53 @@ def main():
                     'torch_rng_state':torch.get_rng_state(),'loader_rng_state':generator.get_state(),
                     'cuda_rng_state':torch.cuda.get_rng_state_all() if device.type=='cuda' else [],
                     'fine_tuned_from':args.init_from or (resume or {}).get('fine_tuned_from')}
-    if initial:
-        status('evaluating_baseline',parameters=parameters)
-        best=run_epoch(model,val_loader,device)
-        torch.save(make_checkpoint(0,None,best),out/'best.tmp'); (out/'best.tmp').replace(out/'best.pt')
-        (run/'baseline.json').write_text(json.dumps({'checkpoint':args.init_from,
-            'checkpoint_sha256':digest(args.init_from),'val_loss_on_candidate':best,
-            'tokenizer':identity},indent=2))
-        print(f'Warm-start baseline on candidate validation: {best:.6f}',flush=True)
-    status('running',epoch=start,parameters=parameters)
-    stopped=False
-    for number in range(start,args.epochs+1):
-        began=time.perf_counter(); status('running',epoch=number,parameters=parameters)
-        training=run_epoch(model,train_loader,device,optimizer,scaler,scheduler)
-        validation=run_epoch(model,val_loader,device)
-        improved=validation<best
-        if improved: best=validation; patience=0
-        else: patience+=1
-        duration=time.perf_counter()-began
-        record={'epoch':number,'train_loss':training,'val_loss':validation,'seconds':duration,'lr':scheduler.get_last_lr()[0]}
-        history.append(record)
-        checkpoint=make_checkpoint(number,training,validation)
-        # Rename after serialization: a stopped run cannot leave a half-written last.pt.
-        torch.save(checkpoint,out/'last.tmp'); (out/'last.tmp').replace(out/'last.pt')
-        if improved:
-            torch.save(checkpoint,out/'best.tmp'); (out/'best.tmp').replace(out/'best.pt')
-        (run/'history.json').write_text(json.dumps(history,indent=2))
-        print(f'Epoch {number}/{args.epochs} | train {training:.4f} | val {validation:.4f} | '
-              f'{duration:.1f}s | {"new best" if improved else "no improvement"}',flush=True)
-        status('running',epoch=number,completed_epoch=number,best_val_loss=best,parameters=parameters)
-        if (run/'STOP_AFTER_EPOCH').exists():
-            (run/'STOP_AFTER_EPOCH').unlink(); stopped=True
-            print('Stopped after saving the epoch, as requested.',flush=True); break
-        if args.patience and patience>=args.patience:
-            print('Early stopping: validation loss has plateaued.',flush=True); break
-    if digest(identity['checkpoint'])!=identity['checkpoint_sha256']:
-        raise RuntimeError('Tokenizer changed during training')
-    status('stopped' if stopped else 'completed',completed_epoch=number,best_val_loss=best,parameters=parameters)
-    print('Training stopped.' if stopped else 'Training completed.',flush=True)
+    tracking_params={'parameters':parameters,'dataset_manifest_sha256':identity['manifest_sha256'],
+                     'tokenizer_sha256':identity['checkpoint_sha256'],
+                     **{k:getattr(cfg,k) for k in ('n_layer','n_head','n_embd','block_size','vocab_size')}}
+    with training_tracking(args.mlflow,run,tracking_params,{'recording_mode':'live_training'}) as tracking:
+        for previous in history:tracking.epoch(previous)
+        if initial:
+            status('evaluating_baseline',parameters=parameters)
+            best=run_epoch(model,val_loader,device)
+            tracking.metrics({'baseline_val_loss':best},step=0)
+            torch.save(make_checkpoint(0,None,best),out/'best.tmp'); (out/'best.tmp').replace(out/'best.pt')
+            (run/'baseline.json').write_text(json.dumps({'checkpoint':args.init_from,
+                'checkpoint_sha256':digest(args.init_from),'val_loss_on_candidate':best,
+                'tokenizer':identity},indent=2))
+            print(f'Warm-start baseline on candidate validation: {best:.6f}',flush=True)
+        status('running',epoch=start,parameters=parameters)
+        stopped=False
+        for number in range(start,args.epochs+1):
+            began=time.perf_counter(); status('running',epoch=number,parameters=parameters)
+            training=run_epoch(model,train_loader,device,optimizer,scaler,scheduler)
+            validation=run_epoch(model,val_loader,device)
+            improved=validation<best
+            if improved: best=validation; patience=0
+            else: patience+=1
+            duration=time.perf_counter()-began
+            record={'epoch':number,'train_loss':training,'val_loss':validation,'seconds':duration,'lr':scheduler.get_last_lr()[0]}
+            history.append(record)
+            checkpoint=make_checkpoint(number,training,validation)
+            # Save weights before tracking: a tracking failure cannot corrupt checkpoints.
+            torch.save(checkpoint,out/'last.tmp'); (out/'last.tmp').replace(out/'last.pt')
+            if improved:
+                torch.save(checkpoint,out/'best.tmp'); (out/'best.tmp').replace(out/'best.pt')
+            (run/'history.json').write_text(json.dumps(history,indent=2))
+            tracking.epoch(record)
+            tracking.metrics({'best_val_loss':best},step=number)
+            print(f'Epoch {number}/{args.epochs} | train {training:.4f} | val {validation:.4f} | '
+                  f'{duration:.1f}s | {"new best" if improved else "no improvement"}',flush=True)
+            status('running',epoch=number,completed_epoch=number,best_val_loss=best,parameters=parameters)
+            if (run/'STOP_AFTER_EPOCH').exists():
+                (run/'STOP_AFTER_EPOCH').unlink(); stopped=True
+                print('Stopped after saving the epoch, as requested.',flush=True); break
+            if args.patience and patience>=args.patience:
+                print('Early stopping: validation loss has plateaued.',flush=True); break
+        if digest(identity['checkpoint'])!=identity['checkpoint_sha256']:
+            raise RuntimeError('Tokenizer changed during training')
+        status('stopped' if stopped else 'completed',completed_epoch=number,best_val_loss=best,parameters=parameters)
+        for name in ('history.json','status.json','baseline.json'):tracking.artifact(run/name)
+        print('Training stopped.' if stopped else 'Training completed.',flush=True)
 
 
 if __name__=='__main__': main()

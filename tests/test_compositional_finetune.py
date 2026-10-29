@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+import importlib.util
 import unittest
 from unittest.mock import patch
 import torch
@@ -67,6 +68,23 @@ class FineTuneTests(unittest.TestCase):
         torch.save(parent,self.parent)
         with patch('sys.argv',self.arguments()),patch('torch.cuda.is_available',return_value=False):
             with self.assertRaisesRegex(ValueError,'tokenizer mismatch'):main()
+
+    @unittest.skipUnless(importlib.util.find_spec('mlflow'),'Install MLflow to test live tracking')
+    def test_warm_start_logs_real_epoch_and_baseline_to_mlflow(self):
+        uri='sqlite:///'+(self.root/'tracking.db').as_posix()
+        from mlflow import MlflowClient
+        from mlflow.tracking._tracking_service.utils import _get_store
+        self.addCleanup(lambda:_get_store(uri).engine.dispose())
+        with patch.dict('os.environ',{'MLFLOW_TRACKING_URI':uri}),patch('mlops.tracking.ROOT',self.root),\
+             patch('sys.argv',self.arguments()+['--mlflow']),patch('torch.cuda.is_available',return_value=False):
+            main()
+        mapping=json.loads((self.root/'run/mlflow.json').read_text())
+        client=MlflowClient(tracking_uri=uri)
+        tracked=client.get_run(mapping['run_id'])
+        self.assertEqual(tracked.info.status,'FINISHED')
+        self.assertIn('baseline_val_loss',tracked.data.metrics)
+        self.assertEqual(len(client.get_metric_history(mapping['run_id'],'val_loss')),1)
+        self.assertEqual(tracked.data.params['dataset_manifest_sha256'],self.identity['manifest_sha256'])
 
 
 if __name__=='__main__':unittest.main()

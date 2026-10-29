@@ -22,3 +22,6 @@ deployment/hosted_smoke.json
 frontend/test-results/
 frontend/playwright-report/
 frontend/*.tsbuildinfo
+mlruns/
+mlartifacts/
+mlflow.db*

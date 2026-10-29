@@ -14,6 +14,7 @@ jobs:
           cache-dependency-path: backend/requirements.txt
       - run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
       - run: pip install -r backend/requirements.txt
+      - run: pip install 'mlflow-skinny==3.12.0' 'sqlalchemy>=2,<3' 'alembic>=1.13,<2'
       - run: python -m unittest discover -s tests -q
       - run: python -m unittest discover -s backend/tests -q
       - run: python -m mlops.check_registry

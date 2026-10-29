@@ -14,6 +14,10 @@ and `.github/workflows/` contains CI and manual release deployment.
 See **[platform setup and deployment](docs/platform.md)** for local commands,
 Groq configuration, Vercel, Google Drive storage and rollback instructions.
 
+**[MLflow dashboard](docs/mlflow.md)** tracks real training curves, model
+provenance and comparison images. Start it with `python -m mlops.mlflow_server`
+and open http://localhost:5000. Future training can enable tracking with `--mlflow`.
+
 The sections below describe the retained older VQ-VAE baseline.
 
 A local autoregressive model for 64x64 pixel-art landscapes. A VQ-VAE encodes
